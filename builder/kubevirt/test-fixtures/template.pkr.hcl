@@ -3,6 +3,7 @@
 
 source "kubevirt" "basic-example" {
   mock = "mock-config"
+  communicator = "ssh"
 }
 
 build {
