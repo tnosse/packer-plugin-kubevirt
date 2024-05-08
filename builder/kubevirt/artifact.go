@@ -1,7 +1,7 @@
 // Copyright (c) HashiCorp, Inc.
 // SPDX-License-Identifier: MPL-2.0
 
-package scaffolding
+package kubevirt
 
 // packersdk.Artifact implementation
 type Artifact struct {

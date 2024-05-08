@@ -1,4 +1,4 @@
-module github.com/hashicorp/packer-plugin-scaffolding
+module github.com/tnosse/packer-plugin-kubevirt
 
 go 1.20
 
