@@ -16,7 +16,7 @@ import (
 	"github.com/hashicorp/packer-plugin-sdk/packer"
 	"github.com/hashicorp/packer-plugin-sdk/template/config"
 	"github.com/hashicorp/packer-plugin-sdk/template/interpolate"
-	"k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	cfg "sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
@@ -24,9 +24,8 @@ const BuilderId = "tnosse.kubevirt"
 
 type Config struct {
 	common.PackerConfig `mapstructure:",squash"`
-
-	MockOption string `mapstructure:"mock"`
-	RunConfig  `mapstructure:",squash"`
+	Comm                communicator.Config `mapstructure:",squash"`
+	MockOption          string              `mapstructure:"mock"`
 
 	ctx interpolate.Context
 }
@@ -61,7 +60,7 @@ func (b *Builder) Run(ctx context.Context, ui packer.Ui, hook packer.Hook) (pack
 		return nil, fmt.Errorf("error getting kubernetes config: %s", err)
 	}
 
-	k8sClient, err := kubernetes.NewForConfig(k8sConfig)
+	k8sClient, err := client.New(k8sConfig, client.Options{})
 	if err != nil {
 		return nil, fmt.Errorf("error creating kubernetes client: %s", err)
 	}
@@ -77,16 +76,24 @@ func (b *Builder) Run(ctx context.Context, ui packer.Ui, hook packer.Hook) (pack
 			CommConf:            &b.config.Comm,
 			SSHTemporaryKeyPair: b.config.Comm.SSHTemporaryKeyPair,
 		},
+		&communicator.StepDumpSSHKey{
+			Path: "debug-key.crt",
+			SSH:  &b.config.Comm.SSH,
+		},
+		&StepCreatePVC{
+			Client: k8sClient,
+		},
 		&StepRunSourceServer{
 			Client: k8sClient,
 		},
-		//&communicator.StepConnect{
-		//	Config: &b.config.RunConfig.Comm,
-		//	Host: func(bag multistep.StateBag) (string, error) {
-		//		return "localhost", nil
-		//	},
-		//	SSHConfig: b.config.RunConfig.Comm.SSHConfigFunc(),
-		//},
+		&StepPortForward{},
+		&communicator.StepConnect{
+			Config: &b.config.Comm,
+			Host: func(bag multistep.StateBag) (string, error) {
+				return "localhost", nil
+			},
+			SSHConfig: b.config.Comm.SSHConfigFunc(),
+		},
 		&commonsteps.StepProvision{},
 	}
 

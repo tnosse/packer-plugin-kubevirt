@@ -4,6 +4,9 @@
 source "kubevirt" "basic-example" {
   mock = "mock-config"
   communicator = "ssh"
+  ssh_port = 2222
+  ssh_host = "localhost"
+  ssh_username = "packer"
 }
 
 build {
@@ -14,6 +17,12 @@ build {
   provisioner "shell-local" {
     inline = [
       "echo build generated data: ${build.GeneratedMockData}",
+    ]
+  }
+
+  provisioner "shell" {
+    inline = [
+      "uname -a",
     ]
   }
 }
