@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
 	"github.com/hashicorp/packer-plugin-sdk/packer"
+	virtv1 "kubevirt.io/api/core/v1"
 	"os/exec"
+	"strings"
 )
 
 var _ multistep.Step = &StepPortForward{}
@@ -25,6 +27,14 @@ func (p *PortForward) Start(name string, arg ...string) error {
 
 func (p *PortForward) Stop() error {
 	p.cancel()
+	err := p.cmd.Wait()
+	if err != nil && !strings.Contains(err.Error(), "signal: killed") {
+		return err
+	}
+	return nil
+}
+
+func (p *PortForward) Wait() error {
 	return p.cmd.Wait()
 }
 
@@ -33,9 +43,10 @@ type StepPortForward struct {
 
 func (s *StepPortForward) Run(ctx context.Context, state multistep.StateBag) multistep.StepAction {
 	ui := state.Get("ui").(packer.Ui)
+	vm := state.Get("server").(*virtv1.VirtualMachine)
 
 	pf := &PortForward{}
-	err := pf.Start("kubectl", "port-forward", "-n", "default", "source-server", "2222:2222")
+	err := pf.Start("virtctl", "port-forward", fmt.Sprintf("vm/%s.%s", vm.Name, vm.Namespace), "2222:22")
 
 	ui.Say("Starting port forward...")
 	if err != nil {

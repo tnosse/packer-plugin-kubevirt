@@ -16,6 +16,8 @@ import (
 	"github.com/hashicorp/packer-plugin-sdk/packer"
 	"github.com/hashicorp/packer-plugin-sdk/template/config"
 	"github.com/hashicorp/packer-plugin-sdk/template/interpolate"
+	virtv1 "kubevirt.io/api/core/v1"
+	cdiv1b1 "kubevirt.io/containerized-data-importer-api/pkg/apis/core/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	cfg "sigs.k8s.io/controller-runtime/pkg/client/config"
 )
@@ -64,6 +66,8 @@ func (b *Builder) Run(ctx context.Context, ui packer.Ui, hook packer.Hook) (pack
 	if err != nil {
 		return nil, fmt.Errorf("error creating kubernetes client: %s", err)
 	}
+	virtv1.AddToScheme(k8sClient.Scheme())
+	cdiv1b1.AddToScheme(k8sClient.Scheme())
 
 	// Setup the state bag and initial state for the steps
 	state := new(multistep.BasicStateBag)
@@ -79,9 +83,6 @@ func (b *Builder) Run(ctx context.Context, ui packer.Ui, hook packer.Hook) (pack
 		&communicator.StepDumpSSHKey{
 			Path: "debug-key.crt",
 			SSH:  &b.config.Comm.SSH,
-		},
-		&StepCreatePVC{
-			Client: k8sClient,
 		},
 		&StepRunSourceServer{
 			Client: k8sClient,

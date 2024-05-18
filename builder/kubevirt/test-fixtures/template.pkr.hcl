@@ -6,7 +6,7 @@ source "kubevirt" "basic-example" {
   communicator = "ssh"
   ssh_port = 2222
   ssh_host = "localhost"
-  ssh_username = "packer"
+  ssh_username = "ubuntu"
 }
 
 build {
