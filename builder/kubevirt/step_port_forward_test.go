@@ -3,7 +3,7 @@ package kubevirt
 import "testing"
 
 func TestPortForward_StartAndStop(t *testing.T) {
-	pf := PortForward{}
+	pf := CommandRunner{}
 	err := pf.Start("sleep", "10")
 	if err != nil {
 		t.Fatalf("Failed to start port forward: %s", err)
@@ -15,7 +15,7 @@ func TestPortForward_StartAndStop(t *testing.T) {
 }
 
 func TestPortForward_StartAndWait(t *testing.T) {
-	pf := PortForward{}
+	pf := CommandRunner{}
 	err := pf.Start("sleep", "2")
 	if err != nil {
 		t.Fatalf("Failed to start port forward: %s", err)

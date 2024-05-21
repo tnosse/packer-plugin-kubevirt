@@ -30,7 +30,7 @@ func (s *StepDownloadImage) Run(ctx context.Context, state multistep.StateBag) m
 	}
 
 	ui.Say("Start downloading image...")
-	cp := &PortForward{}
+	cp := &CommandRunner{}
 	err = cp.Start("kubectl", "-n", "default", "cp", "--retries=-1", "--container=converter", "/image/disk.img", "disk.img")
 	if err != nil {
 		ui.Error(err.Error())

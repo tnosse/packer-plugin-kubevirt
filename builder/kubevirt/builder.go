@@ -18,6 +18,7 @@ import (
 	"github.com/hashicorp/packer-plugin-sdk/template/interpolate"
 	virtv1 "kubevirt.io/api/core/v1"
 	cdiv1b1 "kubevirt.io/containerized-data-importer-api/pkg/apis/core/v1beta1"
+	"os"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	cfg "sigs.k8s.io/controller-runtime/pkg/client/config"
 )
@@ -27,7 +28,9 @@ const BuilderId = "tnosse.kubevirt"
 type Config struct {
 	common.PackerConfig `mapstructure:",squash"`
 	Comm                communicator.Config `mapstructure:",squash"`
-	MockOption          string              `mapstructure:"mock"`
+	Namespace           string              `mapstructure:"namespace"`
+	Output              string              `mapstructure:"output"`
+	SkipExtractImage    bool                `mapstructure:"skip_extract_image"`
 
 	ctx interpolate.Context
 }
@@ -45,12 +48,43 @@ func (b *Builder) Prepare(raws ...interface{}) (generatedVars []string, warnings
 		Interpolate:        true,
 		InterpolateContext: &b.config.ctx,
 	}, raws...)
+
 	if err != nil {
 		return nil, nil, err
 	}
-	// Return the placeholder for the generated data that will become available to provisioners and post-processors.
-	// If the builder doesn't generate any data, just return an empty slice of string: []string{}
-	buildGeneratedData := []string{"GeneratedMockData"}
+
+	if b.config.Output == "" && !b.config.SkipExtractImage {
+		return nil, nil, fmt.Errorf("output is required")
+	}
+	if _, err = os.Stat(b.config.Output); err == nil {
+		return nil, nil, fmt.Errorf("output file %s already exists", b.config.Output)
+	}
+	outputFile, err := os.Create(b.config.Output)
+	if err != nil {
+		return nil, nil, fmt.Errorf("Invalid output path: %s", err)
+	}
+	err = outputFile.Close()
+	if err != nil {
+		return nil, nil, fmt.Errorf("Failed to close output file: %s", err)
+	}
+	err = os.RemoveAll(outputFile.Name())
+	if err != nil {
+		return nil, nil, fmt.Errorf("Failed to remove tmp output file: %s", err)
+	}
+
+	if b.config.Comm.Type != "ssh" {
+		return nil, nil, fmt.Errorf("Only 'ssh' is supported for now")
+	}
+
+	if b.config.Namespace == "" {
+		b.config.Namespace = "default"
+	}
+
+	if b.config.Comm.SSHPort == 0 {
+		b.config.Comm.SSHPort = 2222
+	}
+
+	var buildGeneratedData []string
 	return buildGeneratedData, nil, nil
 }
 
@@ -96,6 +130,7 @@ func (b *Builder) Run(ctx context.Context, ui packer.Ui, hook packer.Hook) (pack
 			SSHConfig: b.config.Comm.SSHConfigFunc(),
 		},
 		&commonsteps.StepProvision{},
+		&StepCopyImage{Client: k8sClient},
 	}
 
 	// Set the value of the generated data that will become available to provisioners.

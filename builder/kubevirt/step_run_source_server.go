@@ -26,7 +26,7 @@ func (s *StepRunSourceServer) Run(ctx context.Context, state multistep.StateBag)
 	config := state.Get("config").(*Config)
 	ui := state.Get("ui").(packersdk.Ui)
 
-	pvcName := "source-data"
+	pvcName := GenerateUniqueName("source-data-")
 
 	ui.Say("Creating source server vm...")
 	cfg := &CloudInitConfig{
@@ -53,52 +53,36 @@ func (s *StepRunSourceServer) Run(ctx context.Context, state multistep.StateBag)
 		if vm.Status.Ready {
 			ui.Say("Source server is running")
 			state.Put("server", vm)
-			time.Sleep(40 * time.Second)
+			time.Sleep(30 * time.Second)
 			break
 		}
 	}
-
-	svc := s.createSourceServerService(config, vm)
-	err = s.Client.Create(context.Background(), svc)
-	if err != nil {
-		ui.Error(fmt.Sprintf("Error creating source server service: %s", err))
-		state.Put("error", err)
-		ui.Error(err.Error())
-		return multistep.ActionHalt
-	}
-	state.Put("service", svc)
-
 	return multistep.ActionContinue
 }
 
 func (s *StepRunSourceServer) Cleanup(state multistep.StateBag) {
 	ui := state.Get("ui").(packersdk.Ui)
 	vm := state.Get("server").(*virtv1.VirtualMachine)
-	svc := state.Get("service").(*v1.Service)
 	err := s.Client.Delete(context.Background(), vm)
 	if err != nil {
 		ui.Error(fmt.Sprintf("Error deleting source server vm: %s", err))
-	}
-	err = s.Client.Delete(context.Background(), svc)
-	if err != nil {
-		ui.Error(fmt.Sprintf("Error deleting source server service: %s", err))
 	}
 }
 
 func (s *StepRunSourceServer) createSourceServerVm(config *Config, pvcName string, cloudInit *CloudInitConfig) *virtv1.VirtualMachine {
 	image := "docker://quay.io/containerdisks/ubuntu:22.04"
-	var runStrategy virtv1.VirtualMachineRunStrategy = virtv1.RunStrategyRerunOnFailure
+	var running = true
 
 	return &virtv1.VirtualMachine{
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: "source-server-",
-			Namespace:    "default",
+			Namespace:    config.Namespace,
 			Labels: map[string]string{
 				"packerBuildName": config.PackerBuildName,
 			},
 		},
 		Spec: virtv1.VirtualMachineSpec{
-			RunStrategy: &runStrategy,
+			Running: &running,
 			Template: &virtv1.VirtualMachineInstanceTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
