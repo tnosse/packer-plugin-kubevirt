@@ -1,8 +1,6 @@
 module github.com/tnosse/packer-plugin-kubevirt
 
-go 1.22.0
-
-toolchain go1.22.2
+go 1.22.3
 
 require (
 	github.com/hashicorp/hcl/v2 v2.19.1
