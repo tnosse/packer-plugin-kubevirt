@@ -6,6 +6,7 @@ source "kubevirt" "basic-example" {
   source_image       = "quay.io/containerdisks/ubuntu:22.04"
   storage            = "3Gi"
   memory             = "1Gi"
+  cpu                = "1"
 }
 
 build {

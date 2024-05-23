@@ -76,7 +76,8 @@ func (s *StepRunSourceServer) Cleanup(state multistep.StateBag) {
 }
 
 func (s *StepRunSourceServer) createSourceServerVm(config *Config, pvcName string, cloudInit *CloudInitConfig) *virtv1.VirtualMachine {
-	image := fmt.Sprintf("docker://%s", strings.ReplaceAll(config.SourceImage, "docker://", ""))
+
+	image := fmt.Sprintf("docker://%s", strings.ReplaceAll(config.RunConfig.SourceImage, "docker://", ""))
 	var running = true
 
 	return &virtv1.VirtualMachine{
@@ -123,8 +124,8 @@ func (s *StepRunSourceServer) createSourceServerVm(config *Config, pvcName strin
 						},
 						Resources: virtv1.ResourceRequirements{
 							Requests: v1.ResourceList{
-								//"cpu":    resource.MustParse("1"),
-								"memory": resource.MustParse(config.Memory),
+								"cpu":    resource.MustParse(config.ResourceConfig.Cpu),
+								"memory": resource.MustParse(config.ResourceConfig.Memory),
 							},
 						},
 					},
@@ -166,7 +167,7 @@ func (s *StepRunSourceServer) createSourceServerVm(config *Config, pvcName strin
 							},
 							Resources: v1.VolumeResourceRequirements{
 								Requests: v1.ResourceList{
-									"storage": resource.MustParse(config.ImageConfig.Storage),
+									"storage": resource.MustParse(config.ResourceConfig.Storage),
 								},
 							},
 						},

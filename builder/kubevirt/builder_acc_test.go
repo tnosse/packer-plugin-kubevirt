@@ -18,7 +18,7 @@ import (
 var testBuilderHCL2Basic string
 
 // Run with: PACKER_ACC=1 go test -count 1 -v ./builder/kubevirt/builder_acc_test.go  -timeout=120m
-func TestAccScaffoldingBuilder(t *testing.T) {
+func TestAccKubevirtBuilder(t *testing.T) {
 	testCase := &acctest.PluginTestCase{
 		Name: "kubevirt_builder_basic_test",
 		Setup: func() error {
