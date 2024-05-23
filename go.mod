@@ -6,7 +6,7 @@ toolchain go1.22.2
 
 require (
 	github.com/hashicorp/hcl/v2 v2.19.1
-	github.com/hashicorp/packer-plugin-sdk v0.5.2
+	github.com/hashicorp/packer-plugin-sdk v0.5.3
 	github.com/zclconf/go-cty v1.13.3
 	k8s.io/api v0.30.0
 	k8s.io/apimachinery v0.30.0
