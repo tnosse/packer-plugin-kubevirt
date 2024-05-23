@@ -21,12 +21,13 @@ type FlatConfig struct {
 	PackerSensitiveVars []string                 `mapstructure:"packer_sensitive_variables" cty:"packer_sensitive_variables" hcl:"packer_sensitive_variables"`
 	Comm                *communicator.FlatConfig `cty:"comm" hcl:"comm"`
 	Namespace           *string                  `mapstructure:"namespace" cty:"namespace" hcl:"namespace"`
-	Storage             *string                  `mapstructure:"storage" cty:"storage" hcl:"storage"`
 	SkipExtractImage    *bool                    `mapstructure:"skip_extract_image" cty:"skip_extract_image" hcl:"skip_extract_image"`
 	OutputImageFile     *string                  `mapstructure:"output_image_file" cty:"output_image_file" hcl:"output_image_file"`
 	SSHUsername         *string                  `mapstructure:"ssh_username" cty:"ssh_username" hcl:"ssh_username"`
 	SourceImage         *string                  `mapstructure:"source_image" cty:"source_image" hcl:"source_image"`
+	Storage             *string                  `mapstructure:"storage" cty:"storage" hcl:"storage"`
 	Memory              *string                  `mapstructure:"memory" cty:"memory" hcl:"memory"`
+	Cpu                 *string                  `mapstructure:"cpu" cty:"cpu" hcl:"cpu"`
 }
 
 // FlatMapstructure returns a new FlatConfig.
@@ -51,12 +52,13 @@ func (*FlatConfig) HCL2Spec() map[string]hcldec.Spec {
 		"packer_sensitive_variables": &hcldec.AttrSpec{Name: "packer_sensitive_variables", Type: cty.List(cty.String), Required: false},
 		"comm":                       &hcldec.BlockSpec{TypeName: "comm", Nested: hcldec.ObjectSpec((*communicator.FlatConfig)(nil).HCL2Spec())},
 		"namespace":                  &hcldec.AttrSpec{Name: "namespace", Type: cty.String, Required: false},
-		"storage":                    &hcldec.AttrSpec{Name: "storage", Type: cty.String, Required: false},
 		"skip_extract_image":         &hcldec.AttrSpec{Name: "skip_extract_image", Type: cty.Bool, Required: false},
 		"output_image_file":          &hcldec.AttrSpec{Name: "output_image_file", Type: cty.String, Required: false},
 		"ssh_username":               &hcldec.AttrSpec{Name: "ssh_username", Type: cty.String, Required: false},
 		"source_image":               &hcldec.AttrSpec{Name: "source_image", Type: cty.String, Required: false},
+		"storage":                    &hcldec.AttrSpec{Name: "storage", Type: cty.String, Required: false},
 		"memory":                     &hcldec.AttrSpec{Name: "memory", Type: cty.String, Required: false},
+		"cpu":                        &hcldec.AttrSpec{Name: "cpu", Type: cty.String, Required: false},
 	}
 	return s
 }

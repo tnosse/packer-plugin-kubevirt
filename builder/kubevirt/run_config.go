@@ -9,6 +9,7 @@ import (
 
 type RunConfig struct {
 	SSHUsername string `mapstructure:"ssh_username"`
+	SourceImage string `mapstructure:"source_image"`
 }
 
 func (c *RunConfig) Prepare(ctx *interpolate.Context, comm *communicator.Config) []error {
@@ -23,6 +24,10 @@ func (c *RunConfig) Prepare(ctx *interpolate.Context, comm *communicator.Config)
 		errs = append(errs, fmt.Errorf("error getting available port: %s", err))
 	} else {
 		comm.SSHPort = port
+	}
+
+	if len(c.SourceImage) < 1 {
+		errs = append(errs, fmt.Errorf("the 'source_image' property must be specified"))
 	}
 
 	return errs

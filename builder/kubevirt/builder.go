@@ -27,11 +27,10 @@ const BuilderId = "tnosse.kubevirt"
 type Config struct {
 	common.PackerConfig `mapstructure:",squash"`
 	Comm                communicator.Config
-	K8sConfig           K8sConfig   `mapstructure:",squash"`
-	ImageConfig         ImageConfig `mapstructure:",squash"`
-	RunConfig           RunConfig   `mapstructure:",squash"`
-	SourceImage         string      `mapstructure:"source_image"`
-	Memory              string      `mapstructure:"memory"`
+	K8sConfig           K8sConfig      `mapstructure:",squash"`
+	ImageConfig         ImageConfig    `mapstructure:",squash"`
+	RunConfig           RunConfig      `mapstructure:",squash"`
+	ResourceConfig      ResourceConfig `mapstructure:",squash"`
 
 	ctx interpolate.Context
 }
@@ -58,12 +57,7 @@ func (b *Builder) Prepare(raws ...interface{}) (generatedVars []string, warnings
 	errs = packer.MultiErrorAppend(errs, b.config.K8sConfig.Prepare(&b.config.ctx)...)
 	errs = packer.MultiErrorAppend(errs, b.config.ImageConfig.Prepare(&b.config.ctx)...)
 	errs = packer.MultiErrorAppend(errs, b.config.RunConfig.Prepare(&b.config.ctx, &b.config.Comm)...)
-	errs = packer.MultiErrorAppend(errs, func() error {
-		if len(b.config.SourceImage) < 1 {
-			return fmt.Errorf("the 'source_image' property must be specified")
-		}
-		return nil
-	}())
+	errs = packer.MultiErrorAppend(errs, b.config.ResourceConfig.Prepare(&b.config.ctx, &b.config.Comm)...)
 
 	if b.config.Comm.Type != "ssh" {
 		return nil, nil, fmt.Errorf("Only 'ssh' is supported for now")
