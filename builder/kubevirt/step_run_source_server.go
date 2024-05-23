@@ -153,7 +153,7 @@ func (s *StepRunSourceServer) createSourceServerVm(config *Config, pvcName strin
 				{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      pvcName,
-						Namespace: "default",
+						Namespace: config.K8sConfig.Namespace,
 					},
 					Spec: cdiv1b1.DataVolumeSpec{
 						Source: &cdiv1b1.DataVolumeSource{
