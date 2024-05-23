@@ -13,6 +13,7 @@ import (
 	virtv1 "kubevirt.io/api/core/v1"
 	cdiv1b1 "kubevirt.io/containerized-data-importer-api/pkg/apis/core/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"strings"
 	"time"
 )
 
@@ -35,6 +36,8 @@ func (s *StepRunSourceServer) Run(ctx context.Context, state multistep.StateBag)
 		},
 	}
 	vm := s.createSourceServerVm(config, pvcName, cfg)
+	state.Put("server", vm)
+	ui.Say(fmt.Sprintf("Launching source server from image %s ...", *vm.Spec.DataVolumeTemplates[0].Spec.Source.Registry.URL))
 	err := s.Client.Create(context.Background(), vm)
 	if err != nil {
 		err := fmt.Errorf("Error launching source server: %s", err)
@@ -45,19 +48,23 @@ func (s *StepRunSourceServer) Run(ctx context.Context, state multistep.StateBag)
 
 	key := types.NamespacedName{Namespace: vm.Namespace, Name: vm.Name}
 	for {
-		err = s.Client.Get(context.Background(), key, vm)
-		if err != nil {
-			ui.Say("Waiting for source server vm to be running...")
-			continue
-		}
-		if vm.Status.Ready {
-			ui.Say("Source server is running")
-			state.Put("server", vm)
-			time.Sleep(30 * time.Second)
-			break
+		select {
+		case <-ctx.Done():
+			ui.Error("Build is canceled, stops waiting for source server VM")
+			return multistep.ActionHalt
+		default:
+			err = s.Client.Get(context.Background(), key, vm)
+			if err != nil {
+				ui.Say("Waiting for source server vm to be running...")
+				continue
+			}
+			if vm.Status.Ready {
+				ui.Say("Source server is running")
+				time.Sleep(30 * time.Second)
+				return multistep.ActionContinue
+			}
 		}
 	}
-	return multistep.ActionContinue
 }
 
 func (s *StepRunSourceServer) Cleanup(state multistep.StateBag) {
@@ -70,13 +77,13 @@ func (s *StepRunSourceServer) Cleanup(state multistep.StateBag) {
 }
 
 func (s *StepRunSourceServer) createSourceServerVm(config *Config, pvcName string, cloudInit *CloudInitConfig) *virtv1.VirtualMachine {
-	image := "docker://quay.io/containerdisks/ubuntu:22.04"
+	image := fmt.Sprintf("docker://%s", strings.ReplaceAll(config.SourceImage, "docker://", ""))
 	var running = true
 
 	return &virtv1.VirtualMachine{
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: "source-server-",
-			Namespace:    config.Namespace,
+			Namespace:    config.K8sConfig.Namespace,
 			Labels: map[string]string{
 				"packerBuildName": config.PackerBuildName,
 			},

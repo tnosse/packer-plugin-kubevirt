@@ -2,11 +2,10 @@
 # SPDX-License-Identifier: MPL-2.0
 
 source "kubevirt" "basic-example" {
-  communicator = "ssh"
-  ssh_port = 2222
-  ssh_host = "localhost"
   ssh_username = "ubuntu"
-  output = "${path.root}/basic-example.img"
+  output_image_file = "${path.root}/basic-example.img"
+  skip_extract_image = true
+  source_image = "quay.io/containerdisks/ubuntu:22.04"
 }
 
 build {

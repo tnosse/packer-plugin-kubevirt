@@ -18,7 +18,6 @@ import (
 	"github.com/hashicorp/packer-plugin-sdk/template/interpolate"
 	virtv1 "kubevirt.io/api/core/v1"
 	cdiv1b1 "kubevirt.io/containerized-data-importer-api/pkg/apis/core/v1beta1"
-	"os"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	cfg "sigs.k8s.io/controller-runtime/pkg/client/config"
 )
@@ -27,10 +26,11 @@ const BuilderId = "tnosse.kubevirt"
 
 type Config struct {
 	common.PackerConfig `mapstructure:",squash"`
-	Comm                communicator.Config `mapstructure:",squash"`
-	Namespace           string              `mapstructure:"namespace"`
-	Output              string              `mapstructure:"output"`
-	SkipExtractImage    bool                `mapstructure:"skip_extract_image"`
+	Comm                communicator.Config
+	K8sConfig           K8sConfig   `mapstructure:",squash"`
+	ImageConfig         ImageConfig `mapstructure:",squash"`
+	RunConfig           RunConfig   `mapstructure:",squash"`
+	SourceImage         string      `mapstructure:"source_image"`
 
 	ctx interpolate.Context
 }
@@ -53,31 +53,19 @@ func (b *Builder) Prepare(raws ...interface{}) (generatedVars []string, warnings
 		return nil, nil, err
 	}
 
-	if b.config.Output == "" && !b.config.SkipExtractImage {
-		return nil, nil, fmt.Errorf("output is required")
-	}
-	if _, err = os.Stat(b.config.Output); err == nil {
-		return nil, nil, fmt.Errorf("output file %s already exists", b.config.Output)
-	}
-	outputFile, err := os.Create(b.config.Output)
-	if err != nil {
-		return nil, nil, fmt.Errorf("Invalid output path: %s", err)
-	}
-	err = outputFile.Close()
-	if err != nil {
-		return nil, nil, fmt.Errorf("Failed to close output file: %s", err)
-	}
-	err = os.RemoveAll(outputFile.Name())
-	if err != nil {
-		return nil, nil, fmt.Errorf("Failed to remove tmp output file: %s", err)
-	}
+	var errs *packer.MultiError
+	errs = packer.MultiErrorAppend(errs, b.config.K8sConfig.Prepare(&b.config.ctx)...)
+	errs = packer.MultiErrorAppend(errs, b.config.ImageConfig.Prepare(&b.config.ctx)...)
+	errs = packer.MultiErrorAppend(errs, b.config.RunConfig.Prepare(&b.config.ctx, &b.config.Comm)...)
+	errs = packer.MultiErrorAppend(errs, func() error {
+		if len(b.config.SourceImage) < 1 {
+			return fmt.Errorf("the 'source_image' property must be specified")
+		}
+		return nil
+	}())
 
 	if b.config.Comm.Type != "ssh" {
 		return nil, nil, fmt.Errorf("Only 'ssh' is supported for now")
-	}
-
-	if b.config.Namespace == "" {
-		b.config.Namespace = "default"
 	}
 
 	if b.config.Comm.SSHPort == 0 {

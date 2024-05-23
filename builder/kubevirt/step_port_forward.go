@@ -25,7 +25,7 @@ func (s *StepPortForward) Run(ctx context.Context, state multistep.StateBag) mul
 		fmt.Sprintf("vm/%s.%s", vm.Name, vm.Namespace),
 		fmt.Sprintf("%d:22", config.Comm.SSHPort))
 
-	ui.Say("Starting port forward...")
+	ui.Say(fmt.Sprintf("Starting port forward using local port %d ...", config.Comm.SSHPort))
 	if err != nil {
 		err := fmt.Errorf("Port-forward finished with error: %s", err)
 		state.Put("error", err)

@@ -23,7 +23,7 @@ func (s *StepCopyImage) Run(ctx context.Context, state multistep.StateBag) multi
 	ui := state.Get("ui").(packersdk.Ui)
 	vm := state.Get("server").(*virtv1.VirtualMachine)
 
-	if config.SkipExtractImage {
+	if config.ImageConfig.SkipExtractImage {
 		ui.Say("Skipping extract of VM image")
 		return multistep.ActionContinue
 	}
@@ -80,7 +80,7 @@ func (s *StepCopyImage) Run(ctx context.Context, state multistep.StateBag) multi
 		return multistep.ActionHalt
 	}
 
-	err = os.Rename(tmpDir+string(os.PathSeparator)+"disk.img", config.Output)
+	err = os.Rename(tmpDir+string(os.PathSeparator)+"disk.img", config.ImageConfig.OutputImageFile)
 	if err != nil {
 		ui.Error(fmt.Sprintf("Failed to rename temporary file: %s", err))
 		return multistep.ActionHalt
