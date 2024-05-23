@@ -7,6 +7,7 @@ import (
 )
 
 type ImageConfig struct {
+	Storage          string `mapstructure:"storage"`
 	SkipExtractImage bool   `mapstructure:"skip_extract_image"`
 	OutputImageFile  string `mapstructure:"output_image_file"`
 }

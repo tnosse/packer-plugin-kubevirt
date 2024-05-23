@@ -9,7 +9,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/intstr"
 	virtv1 "kubevirt.io/api/core/v1"
 	cdiv1b1 "kubevirt.io/containerized-data-importer-api/pkg/apis/core/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -125,7 +124,7 @@ func (s *StepRunSourceServer) createSourceServerVm(config *Config, pvcName strin
 						Resources: virtv1.ResourceRequirements{
 							Requests: v1.ResourceList{
 								//"cpu":    resource.MustParse("1"),
-								"memory": resource.MustParse("1Gi"),
+								"memory": resource.MustParse(config.Memory),
 							},
 						},
 					},
@@ -167,35 +166,13 @@ func (s *StepRunSourceServer) createSourceServerVm(config *Config, pvcName strin
 							},
 							Resources: v1.VolumeResourceRequirements{
 								Requests: v1.ResourceList{
-									"storage": resource.MustParse("3Gi"),
+									"storage": resource.MustParse(config.ImageConfig.Storage),
 								},
 							},
 						},
 					},
 				},
 			},
-		},
-	}
-}
-
-func (s *StepRunSourceServer) createSourceServerService(config *Config, vm *virtv1.VirtualMachine) *v1.Service {
-	return &v1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: vm.Namespace,
-			Name:      vm.Name,
-			Labels:    vm.Labels,
-		},
-		Spec: v1.ServiceSpec{
-			Selector: vm.Labels,
-			Ports: []v1.ServicePort{
-				{
-					Port:       2222,
-					Name:       "ssh",
-					Protocol:   v1.ProtocolTCP,
-					TargetPort: intstr.IntOrString{IntVal: 22},
-				},
-			},
-			Type: v1.ServiceTypeClusterIP,
 		},
 	}
 }
