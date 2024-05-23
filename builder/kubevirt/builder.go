@@ -31,6 +31,7 @@ type Config struct {
 	ImageConfig         ImageConfig `mapstructure:",squash"`
 	RunConfig           RunConfig   `mapstructure:",squash"`
 	SourceImage         string      `mapstructure:"source_image"`
+	Memory              string      `mapstructure:"memory"`
 
 	ctx interpolate.Context
 }

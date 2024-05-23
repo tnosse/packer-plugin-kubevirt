@@ -4,6 +4,8 @@ source "kubevirt" "basic-example" {
   output_image_file  = "${path.root}/basic-example.img"
   skip_extract_image = true
   source_image       = "quay.io/containerdisks/ubuntu:22.04"
+  storage            = "3Gi"
+  memory             = "1Gi"
 }
 
 build {
