@@ -1,4 +1,4 @@
-NAME=scaffolding
+NAME=kubevirt
 BINARY=packer-plugin-${NAME}
 
 COUNT?=1
@@ -18,7 +18,7 @@ dev:
 test:
 	@go test -race -count $(COUNT) $(TEST) -timeout=3m
 
-install-packer-sdc: ## Install packer sofware development command
+install-packer-sdc: ## Install packer software development command
 	@go install github.com/hashicorp/packer-plugin-sdk/cmd/packer-sdc@${HASHICORP_PACKER_PLUGIN_SDK_VERSION}
 
 plugin-check: install-packer-sdc build
@@ -31,5 +31,5 @@ generate: install-packer-sdc
 	@go generate ./...
 	@rm -rf .docs
 	@packer-sdc renderdocs -src docs -partials docs-partials/ -dst .docs/
-	@./.web-docs/scripts/compile-to-webdocs.sh "." ".docs" ".web-docs" "hashicorp"
+	@./.web-docs/scripts/compile-to-webdocs.sh "." ".docs" ".web-docs" "tnosse"
 	@rm -r ".docs"

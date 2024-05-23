@@ -1,9 +1,13 @@
 main
-packer-plugin-scaffolding
+packer-plugin-kubevirt
 **/packer_log*.txt
-**/git_*test.pkr.hcl
+**/kubevirt_*test.pkr.hcl
+**/test-*-download.txt
+**/debug-key.crt
 crash.log
 
 dist/*
 .docs/*
 docs.zip
+.idea
+
