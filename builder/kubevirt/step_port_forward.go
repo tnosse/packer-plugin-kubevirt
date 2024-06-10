@@ -23,7 +23,7 @@ func (s *StepPortForward) Run(ctx context.Context, state multistep.StateBag) mul
 		"virtctl",
 		"port-forward",
 		fmt.Sprintf("vm/%s.%s", vm.Name, vm.Namespace),
-		fmt.Sprintf("%d:22", config.Comm.SSHPort))
+		fmt.Sprintf("tcp/%d:22", config.Comm.SSHPort))
 
 	ui.Say(fmt.Sprintf("Starting port forward using local port %d ...", config.Comm.SSHPort))
 	if err != nil {

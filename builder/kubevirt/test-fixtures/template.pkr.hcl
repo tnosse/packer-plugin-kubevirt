@@ -1,6 +1,8 @@
 
 source "kubevirt" "basic-example" {
   ssh_username       = "ubuntu"
+  ssh_pty            = true
+  ssh_timeout        = "10m"
   output_image_file  = "${path.root}/basic-example.img"
   skip_extract_image = true
   source_image       = "quay.io/containerdisks/ubuntu:22.04"
