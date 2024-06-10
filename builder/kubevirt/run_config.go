@@ -8,16 +8,16 @@ import (
 )
 
 type RunConfig struct {
-	SSHUsername string `mapstructure:"ssh_username"`
-	SourceImage string `mapstructure:"source_image"`
+	communicator.SSH `mapstructure:",squash"`
+	SourceImage      string `mapstructure:"source_image"`
 }
 
 func (c *RunConfig) Prepare(ctx *interpolate.Context, comm *communicator.Config) []error {
 	var errs []error
 
-	comm.SSHUsername = c.SSHUsername
-	comm.SSHHost = "localhost"
+	comm.SSH = c.SSH
 	comm.Type = "ssh"
+	comm.SSHHost = "localhost"
 
 	port, err := getAvailablePort()
 	if err != nil {
