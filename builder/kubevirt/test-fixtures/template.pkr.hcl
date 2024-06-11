@@ -9,6 +9,7 @@ source "kubevirt" "basic-example" {
   storage            = "3Gi"
   memory             = "1Gi"
   cpu                = "1"
+  source_server_wait_time = 30
 }
 
 build {
