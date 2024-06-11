@@ -21,6 +21,7 @@ type FlatConfig struct {
 	PackerSensitiveVars       []string                 `mapstructure:"packer_sensitive_variables" cty:"packer_sensitive_variables" hcl:"packer_sensitive_variables"`
 	Comm                      *communicator.FlatConfig `cty:"comm" hcl:"comm"`
 	Namespace                 *string                  `mapstructure:"namespace" cty:"namespace" hcl:"namespace"`
+	UseServiceNodePort        *bool                    `mapstructure:"use_service_node_port" cty:"use_service_node_port" hcl:"use_service_node_port"`
 	SkipExtractImage          *bool                    `mapstructure:"skip_extract_image" cty:"skip_extract_image" hcl:"skip_extract_image"`
 	OutputImageFile           *string                  `mapstructure:"output_image_file" cty:"output_image_file" hcl:"output_image_file"`
 	SSHHost                   *string                  `mapstructure:"ssh_host" cty:"ssh_host" hcl:"ssh_host"`
@@ -90,6 +91,7 @@ func (*FlatConfig) HCL2Spec() map[string]hcldec.Spec {
 		"packer_sensitive_variables":   &hcldec.AttrSpec{Name: "packer_sensitive_variables", Type: cty.List(cty.String), Required: false},
 		"comm":                         &hcldec.BlockSpec{TypeName: "comm", Nested: hcldec.ObjectSpec((*communicator.FlatConfig)(nil).HCL2Spec())},
 		"namespace":                    &hcldec.AttrSpec{Name: "namespace", Type: cty.String, Required: false},
+		"use_service_node_port":        &hcldec.AttrSpec{Name: "use_service_node_port", Type: cty.Bool, Required: false},
 		"skip_extract_image":           &hcldec.AttrSpec{Name: "skip_extract_image", Type: cty.Bool, Required: false},
 		"output_image_file":            &hcldec.AttrSpec{Name: "output_image_file", Type: cty.String, Required: false},
 		"ssh_host":                     &hcldec.AttrSpec{Name: "ssh_host", Type: cty.String, Required: false},

@@ -1,7 +1,6 @@
 package kubevirt
 
 import (
-	"fmt"
 	"github.com/hashicorp/packer-plugin-sdk/template/interpolate"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -22,12 +21,10 @@ func TestK8sConfigPrepare(t *testing.T) {
 			kcInput: &K8sConfig{
 				Namespace:          "",
 				UseServiceNodePort: false,
-				NodeHost:           "localhost",
 			},
 			expected: &K8sConfig{
 				Namespace:          "default",
 				UseServiceNodePort: false,
-				NodeHost:           "localhost",
 			},
 			errors: []error{},
 		},
@@ -36,12 +33,10 @@ func TestK8sConfigPrepare(t *testing.T) {
 			kcInput: &K8sConfig{
 				Namespace:          "kube-system",
 				UseServiceNodePort: true,
-				NodeHost:           "localhost",
 			},
 			expected: &K8sConfig{
 				Namespace:          "kube-system",
 				UseServiceNodePort: true,
-				NodeHost:           "localhost",
 			},
 			errors: []error{},
 		},
@@ -50,16 +45,12 @@ func TestK8sConfigPrepare(t *testing.T) {
 			kcInput: &K8sConfig{
 				Namespace:          "default",
 				UseServiceNodePort: true,
-				NodeHost:           "",
 			},
 			expected: &K8sConfig{
 				Namespace:          "default",
 				UseServiceNodePort: true,
-				NodeHost:           "",
 			},
-			errors: []error{
-				fmt.Errorf("node_host cannot be empty when use_service_node_port"),
-			},
+			errors: []error{},
 		},
 	}
 	ctx := &interpolate.Context{}

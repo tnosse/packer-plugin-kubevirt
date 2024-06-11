@@ -13,12 +13,12 @@ type RunConfig struct {
 	SourceServerWaitTime int    `mapstructure:"source_server_wait_time"`
 }
 
-func (c *RunConfig) Prepare(ctx *interpolate.Context, comm *communicator.Config) []error {
+func (c *RunConfig) Prepare(ctx *interpolate.Context, k8sConfig *K8sConfig, comm *communicator.Config) []error {
 	var errs []error
 
 	comm.SSH = c.SSH
 	comm.Type = "ssh"
-	comm.SSHHost = "localhost"
+	comm.SSHHost = c.SSHHost
 
 	port, err := getAvailablePort()
 	if err != nil {

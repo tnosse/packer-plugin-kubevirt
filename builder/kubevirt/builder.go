@@ -56,7 +56,7 @@ func (b *Builder) Prepare(raws ...interface{}) (generatedVars []string, warnings
 	var errs *packer.MultiError
 	errs = packer.MultiErrorAppend(errs, b.config.K8sConfig.Prepare(&b.config.ctx)...)
 	errs = packer.MultiErrorAppend(errs, b.config.ImageConfig.Prepare(&b.config.ctx)...)
-	errs = packer.MultiErrorAppend(errs, b.config.RunConfig.Prepare(&b.config.ctx, &b.config.Comm)...)
+	errs = packer.MultiErrorAppend(errs, b.config.RunConfig.Prepare(&b.config.ctx, &b.config.K8sConfig, &b.config.Comm)...)
 	errs = packer.MultiErrorAppend(errs, b.config.ResourceConfig.Prepare(&b.config.ctx, &b.config.Comm)...)
 
 	if b.config.Comm.Type != "ssh" {
@@ -92,34 +92,36 @@ func (b *Builder) Run(ctx context.Context, ui packer.Ui, hook packer.Hook) (pack
 	state.Put("hook", hook)
 	state.Put("ui", ui)
 
-	steps := []multistep.Step{
+	steps := []multistep.Step{}
+	steps = append(steps,
 		&communicator.StepSSHKeyGen{
 			CommConf:            &b.config.Comm,
 			SSHTemporaryKeyPair: b.config.Comm.SSHTemporaryKeyPair,
-		},
-		&communicator.StepDumpSSHKey{
-			Path: "debug-key.crt",
-			SSH:  &b.config.Comm.SSH,
-		},
-		&StepRunSourceServer{
-			Client: k8sClient,
-		},
-		&StepPortForward{},
-		&communicator.StepConnect{
-			Config: &b.config.Comm,
-			Host: func(bag multistep.StateBag) (string, error) {
-				return "localhost", nil
-			},
-			SSHConfig: b.config.Comm.SSHConfigFunc(),
-		},
-		&commonsteps.StepProvision{},
-		&StepCopyImage{Client: k8sClient},
+		})
+	steps = append(steps, &communicator.StepDumpSSHKey{Path: "debug-key.crt", SSH: &b.config.Comm.SSH})
+	steps = append(steps, &StepRunSourceServer{Client: k8sClient})
+
+	if !b.config.K8sConfig.UseServiceNodePort {
+		steps = append(steps, &StepPortForward{})
 	}
 
-	// Set the value of the generated data that will become available to provisioners.
-	// To share the data with post-processors, use the StateData in the artifact.
-	state.Put("generated_data", map[string]interface{}{
-		"GeneratedMockData": "mock-build-data",
+	steps = append(steps, &communicator.StepConnect{
+		Config: &b.config.Comm,
+		Host: func(bag multistep.StateBag) (string, error) {
+			if b.config.K8sConfig.UseServiceNodePort {
+				return b.config.Comm.SSHHost, nil
+			} else {
+				return "localhost", nil
+			}
+		},
+		SSHConfig: b.config.Comm.SSHConfigFunc(),
+	})
+
+	steps = append(steps, &commonsteps.StepProvision{})
+	steps = append(steps, &StepCopyImage{Client: k8sClient})
+
+	state.Put("image", map[string]interface{}{
+		"image": &b.config.ImageConfig.OutputImageFile,
 	})
 
 	// Run!
@@ -134,7 +136,7 @@ func (b *Builder) Run(ctx context.Context, ui packer.Ui, hook packer.Hook) (pack
 	artifact := &Artifact{
 		// Add the builder generated data to the artifact StateData so that post-processors
 		// can access them.
-		StateData: map[string]interface{}{"generated_data": state.Get("generated_data")},
+		StateData: map[string]interface{}{"image": state.Get("image")},
 	}
 	return artifact, nil
 }
