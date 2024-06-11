@@ -59,7 +59,7 @@ func (s *StepRunSourceServer) Run(ctx context.Context, state multistep.StateBag)
 			}
 			if vm.Status.Ready {
 				ui.Say("Source server is running")
-				time.Sleep(30 * time.Second)
+				time.Sleep(config.RunConfig.SourceServerWaitTime * time.Second)
 				return multistep.ActionContinue
 			}
 		}
