@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	virtv1 "kubevirt.io/api/core/v1"
 	cdiv1b1 "kubevirt.io/containerized-data-importer-api/pkg/apis/core/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -59,7 +60,18 @@ func (s *StepRunSourceServer) Run(ctx context.Context, state multistep.StateBag)
 			}
 			if vm.Status.Ready {
 				ui.Say("Source server is running")
-				time.Sleep(30 * time.Second)
+				time.Sleep(time.Duration(config.RunConfig.SourceServerWaitTime) * time.Second)
+
+				if config.K8sConfig.UseServiceNodePort {
+					svc := s.createNodePortService(config, vm)
+					if err := s.Client.Create(context.Background(), svc); err != nil {
+						ui.Say("Failed to create node port service")
+						ui.Error(err.Error())
+						return multistep.ActionHalt
+					}
+					config.RunConfig.SSHPort = int(svc.Spec.Ports[0].NodePort)
+					config.Comm.SSHPort = config.RunConfig.SSHPort
+				}
 				return multistep.ActionContinue
 			}
 		}
@@ -68,10 +80,18 @@ func (s *StepRunSourceServer) Run(ctx context.Context, state multistep.StateBag)
 
 func (s *StepRunSourceServer) Cleanup(state multistep.StateBag) {
 	ui := state.Get("ui").(packersdk.Ui)
+	config := state.Get("config").(*Config)
 	vm := state.Get("server").(*virtv1.VirtualMachine)
+
 	err := s.Client.Delete(context.Background(), vm)
 	if err != nil {
 		ui.Error(fmt.Sprintf("Error deleting source server vm: %s", err))
+	}
+	if config.K8sConfig.UseServiceNodePort {
+		err = s.Client.Delete(context.Background(), &v1.Service{ObjectMeta: metav1.ObjectMeta{Namespace: vm.Namespace, Name: vm.Name}})
+		if err != nil {
+			ui.Error(fmt.Sprintf("Error deleting source server vm service: %s", err))
+		}
 	}
 }
 
@@ -174,6 +194,33 @@ func (s *StepRunSourceServer) createSourceServerVm(config *Config, pvcName strin
 					},
 				},
 			},
+		},
+	}
+}
+
+func (s *StepRunSourceServer) createNodePortService(config *Config, vm *virtv1.VirtualMachine) *v1.Service {
+	ipFamilyPolicy := v1.IPFamilyPolicySingleStack
+	return &v1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      vm.Name,
+			Namespace: vm.Namespace,
+		},
+		Spec: v1.ServiceSpec{
+			Type:     v1.ServiceTypeNodePort,
+			Selector: vm.Labels,
+			Ports: []v1.ServicePort{
+				{
+					Port:     22,
+					Protocol: v1.ProtocolTCP,
+					TargetPort: intstr.IntOrString{
+						IntVal: 22,
+					},
+				},
+			},
+			IPFamilies: []v1.IPFamily{
+				v1.IPv4Protocol,
+			},
+			IPFamilyPolicy: &ipFamilyPolicy,
 		},
 	}
 }

@@ -5,6 +5,7 @@ go 1.22.3
 require (
 	github.com/hashicorp/hcl/v2 v2.19.1
 	github.com/hashicorp/packer-plugin-sdk v0.5.3
+	github.com/stretchr/testify v1.9.0
 	github.com/zclconf/go-cty v1.13.3
 	k8s.io/api v0.30.0
 	k8s.io/apimachinery v0.30.0
@@ -108,10 +109,10 @@ require (
 	github.com/packer-community/winrmcp v0.0.0-20180921211025-c76d91c1e7db // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pkg/sftp v1.13.6 // indirect
+	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/rogpeppe/go-internal v1.11.0 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/stretchr/testify v1.9.0 // indirect
 	github.com/ugorji/go/codec v1.2.6 // indirect
 	github.com/ulikunitz/xz v0.5.10 // indirect
 	go.opencensus.io v0.24.0 // indirect

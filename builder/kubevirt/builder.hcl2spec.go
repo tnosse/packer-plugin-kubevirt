@@ -21,6 +21,7 @@ type FlatConfig struct {
 	PackerSensitiveVars       []string                 `mapstructure:"packer_sensitive_variables" cty:"packer_sensitive_variables" hcl:"packer_sensitive_variables"`
 	Comm                      *communicator.FlatConfig `cty:"comm" hcl:"comm"`
 	Namespace                 *string                  `mapstructure:"namespace" cty:"namespace" hcl:"namespace"`
+	UseServiceNodePort        *bool                    `mapstructure:"use_service_node_port" cty:"use_service_node_port" hcl:"use_service_node_port"`
 	SkipExtractImage          *bool                    `mapstructure:"skip_extract_image" cty:"skip_extract_image" hcl:"skip_extract_image"`
 	OutputImageFile           *string                  `mapstructure:"output_image_file" cty:"output_image_file" hcl:"output_image_file"`
 	SSHHost                   *string                  `mapstructure:"ssh_host" cty:"ssh_host" hcl:"ssh_host"`
@@ -62,6 +63,7 @@ type FlatConfig struct {
 	SSHPublicKey              []byte                   `mapstructure:"ssh_public_key" undocumented:"true" cty:"ssh_public_key" hcl:"ssh_public_key"`
 	SSHPrivateKey             []byte                   `mapstructure:"ssh_private_key" undocumented:"true" cty:"ssh_private_key" hcl:"ssh_private_key"`
 	SourceImage               *string                  `mapstructure:"source_image" cty:"source_image" hcl:"source_image"`
+	SourceServerWaitTime      *int                     `mapstructure:"source_server_wait_time" cty:"source_server_wait_time" hcl:"source_server_wait_time"`
 	Storage                   *string                  `mapstructure:"storage" cty:"storage" hcl:"storage"`
 	Memory                    *string                  `mapstructure:"memory" cty:"memory" hcl:"memory"`
 	Cpu                       *string                  `mapstructure:"cpu" cty:"cpu" hcl:"cpu"`
@@ -89,6 +91,7 @@ func (*FlatConfig) HCL2Spec() map[string]hcldec.Spec {
 		"packer_sensitive_variables":   &hcldec.AttrSpec{Name: "packer_sensitive_variables", Type: cty.List(cty.String), Required: false},
 		"comm":                         &hcldec.BlockSpec{TypeName: "comm", Nested: hcldec.ObjectSpec((*communicator.FlatConfig)(nil).HCL2Spec())},
 		"namespace":                    &hcldec.AttrSpec{Name: "namespace", Type: cty.String, Required: false},
+		"use_service_node_port":        &hcldec.AttrSpec{Name: "use_service_node_port", Type: cty.Bool, Required: false},
 		"skip_extract_image":           &hcldec.AttrSpec{Name: "skip_extract_image", Type: cty.Bool, Required: false},
 		"output_image_file":            &hcldec.AttrSpec{Name: "output_image_file", Type: cty.String, Required: false},
 		"ssh_host":                     &hcldec.AttrSpec{Name: "ssh_host", Type: cty.String, Required: false},
@@ -130,6 +133,7 @@ func (*FlatConfig) HCL2Spec() map[string]hcldec.Spec {
 		"ssh_public_key":               &hcldec.AttrSpec{Name: "ssh_public_key", Type: cty.List(cty.Number), Required: false},
 		"ssh_private_key":              &hcldec.AttrSpec{Name: "ssh_private_key", Type: cty.List(cty.Number), Required: false},
 		"source_image":                 &hcldec.AttrSpec{Name: "source_image", Type: cty.String, Required: false},
+		"source_server_wait_time":      &hcldec.AttrSpec{Name: "source_server_wait_time", Type: cty.Number, Required: false},
 		"storage":                      &hcldec.AttrSpec{Name: "storage", Type: cty.String, Required: false},
 		"memory":                       &hcldec.AttrSpec{Name: "memory", Type: cty.String, Required: false},
 		"cpu":                          &hcldec.AttrSpec{Name: "cpu", Type: cty.String, Required: false},
