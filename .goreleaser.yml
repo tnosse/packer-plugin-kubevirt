@@ -1,5 +1,4 @@
-# This is an example goreleaser.yaml file with some sane defaults.
-# Make sure to check the documentation at http://goreleaser.com
+version: 2
 env:
   - CGO_ENABLED=0
 before:
@@ -80,6 +79,3 @@ release:
   # To include a separate docs.zip uncomment the extra_files config and the docs.zip command hook above.
   #extra_files:
   #- glob: ./docs.zip
-
-changelog:
-  skip: true
