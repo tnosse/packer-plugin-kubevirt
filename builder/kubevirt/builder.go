@@ -63,10 +63,6 @@ func (b *Builder) Prepare(raws ...interface{}) (generatedVars []string, warnings
 		return nil, nil, fmt.Errorf("Only 'ssh' is supported for now")
 	}
 
-	if b.config.Comm.SSHPort == 0 {
-		b.config.Comm.SSHPort = 2222
-	}
-
 	var buildGeneratedData []string
 	return buildGeneratedData, nil, nil
 }

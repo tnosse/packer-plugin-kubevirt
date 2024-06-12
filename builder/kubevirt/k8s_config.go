@@ -18,7 +18,7 @@ func (c *K8sConfig) Prepare(ctx *interpolate.Context) []error {
 		c.Namespace = "default"
 	}
 
-	if c.ServiceType == v1.ServiceTypeLoadBalancer && c.ServicePort == 0 {
+	if c.ServicePort == 0 && (c.ServiceType == v1.ServiceTypeLoadBalancer || c.ServiceType == v1.ServiceTypeClusterIP) {
 		c.ServicePort = 22
 	}
 

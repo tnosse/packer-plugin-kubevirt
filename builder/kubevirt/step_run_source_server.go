@@ -3,7 +3,6 @@ package kubevirt
 import (
 	"context"
 	"fmt"
-	"github.com/google/martian/v3/log"
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
 	packersdk "github.com/hashicorp/packer-plugin-sdk/packer"
 	v1 "k8s.io/api/core/v1"
@@ -71,8 +70,6 @@ func (s *StepRunSourceServer) Run(ctx context.Context, state multistep.StateBag)
 						ui.Error(err.Error())
 						return multistep.ActionHalt
 					}
-					config.RunConfig.SSHPort = int(svc.Spec.Ports[0].NodePort)
-					config.Comm.SSHPort = config.RunConfig.SSHPort
 
 					// Wait for lb IP
 					if config.K8sConfig.ServiceType == v1.ServiceTypeLoadBalancer {
@@ -91,14 +88,24 @@ func (s *StepRunSourceServer) Run(ctx context.Context, state multistep.StateBag)
 									ui.Say("VM service LoadBalancer IP is not ready")
 									time.Sleep(3 * time.Second)
 								} else {
-									ui.Sayf("Using LoadBalancer IP %s", svc.Status.LoadBalancer.Ingress[0].IP)
+									config.Comm.SSHPort = config.K8sConfig.ServicePort
 									config.Comm.SSHHost = svc.Status.LoadBalancer.Ingress[0].IP
 									return multistep.ActionContinue
 								}
 							}
 						}
+					} else if config.K8sConfig.ServiceType == v1.ServiceTypeNodePort {
+						config.Comm.SSHPort = int(svc.Spec.Ports[0].NodePort)
+					} else {
+						config.Comm.SSHPort = config.K8sConfig.ServicePort
+						config.Comm.SSHHost = svc.Spec.ClusterIP
 					}
 				}
+				connectStrategy := "port-forward"
+				if config.K8sConfig.ServiceType != "" {
+					connectStrategy = string(config.K8sConfig.ServiceType) + " service"
+				}
+				ui.Sayf("Using %s %s:%d for SSH.", connectStrategy, config.Comm.SSHHost, config.Comm.SSHPort)
 				return multistep.ActionContinue
 			}
 		}
@@ -261,7 +268,7 @@ func (s *StepRunSourceServer) createService(config *Config, vm *virtv1.VirtualMa
 		svc.Spec.Type = v1.ServiceTypeLoadBalancer
 		svc.Spec.Ports[0].Port = int32(config.K8sConfig.ServicePort)
 	default:
-		log.Errorf("VM service is only supported for service types %s", fmt.Sprintf("%s and %s", v1.ServiceTypeNodePort, v1.ServiceTypeLoadBalancer))
+		svc.Spec.Ports[0].Port = int32(config.K8sConfig.ServicePort)
 	}
 
 	return svc
