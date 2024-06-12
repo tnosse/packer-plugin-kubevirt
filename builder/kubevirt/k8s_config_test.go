@@ -32,11 +32,11 @@ func TestK8sConfigPrepare(t *testing.T) {
 		{
 			name: "NonEmptyNamespace",
 			kcInput: &K8sConfig{
-				Namespace:   "kube-system",
+				Namespace:   "default",
 				ServiceType: v1.ServiceTypeNodePort,
 			},
 			expected: &K8sConfig{
-				Namespace:   "kube-system",
+				Namespace:   "default",
 				ServiceType: v1.ServiceTypeNodePort,
 			},
 			errors: []error{},
@@ -51,6 +51,20 @@ func TestK8sConfigPrepare(t *testing.T) {
 			expected: &K8sConfig{
 				Namespace:   "default",
 				ServiceType: v1.ServiceTypeLoadBalancer,
+				ServicePort: 22,
+			},
+			errors: []error{},
+		},
+		{
+			name: "DefaultServicePort2",
+			kcInput: &K8sConfig{
+				Namespace:   "default",
+				ServiceType: v1.ServiceTypeClusterIP,
+				ServicePort: 0,
+			},
+			expected: &K8sConfig{
+				Namespace:   "default",
+				ServiceType: v1.ServiceTypeClusterIP,
 				ServicePort: 22,
 			},
 			errors: []error{},

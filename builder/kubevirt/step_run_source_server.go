@@ -97,6 +97,9 @@ func (s *StepRunSourceServer) Run(ctx context.Context, state multistep.StateBag)
 								}
 							}
 						}
+					} else if config.K8sConfig.ServiceType == v1.ServiceTypeClusterIP {
+						ui.Sayf("Using ClusterIP Service %s", svc.Spec.ClusterIP)
+						config.Comm.SSHHost = svc.Spec.ClusterIP
 					}
 				}
 				return multistep.ActionContinue
