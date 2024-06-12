@@ -1,14 +1,16 @@
 
-packer {
-  required_plugins {
-    kubevirt = {
-      version = ">=v0.0.3"
-      source  = "github.com/tnosse/kubevirt"
-    }
-  }
-}
+# packer {
+#   required_plugins {
+#     kubevirt = {
+#       version = ">=v0.0.7"
+#       source  = "github.com/tnosse/kubevirt"
+#     }
+#   }
+# }
 
-source "kubevirt" "basic-example" {
+source "kubevirt" "port-forward-example" {
+  // we use localhost, ssh_port will be generated
+  ssh_host           = "localhost"
   ssh_username       = "ubuntu"
   output_image_file  = "${path.root}/basic-example.img"
   skip_extract_image = true
@@ -19,7 +21,7 @@ source "kubevirt" "basic-example" {
 
 build {
   sources = [
-    "source.kubevirt.basic-example"
+    "source.kubevirt.port-forward-example"
   ]
 
   provisioner "shell" {

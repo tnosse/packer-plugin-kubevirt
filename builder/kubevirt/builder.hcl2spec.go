@@ -6,6 +6,7 @@ import (
 	"github.com/hashicorp/hcl/v2/hcldec"
 	"github.com/hashicorp/packer-plugin-sdk/communicator"
 	"github.com/zclconf/go-cty/cty"
+	v1 "k8s.io/api/core/v1"
 )
 
 // FlatConfig is an auto-generated flat version of Config.
@@ -21,7 +22,8 @@ type FlatConfig struct {
 	PackerSensitiveVars       []string                 `mapstructure:"packer_sensitive_variables" cty:"packer_sensitive_variables" hcl:"packer_sensitive_variables"`
 	Comm                      *communicator.FlatConfig `cty:"comm" hcl:"comm"`
 	Namespace                 *string                  `mapstructure:"namespace" cty:"namespace" hcl:"namespace"`
-	UseServiceNodePort        *bool                    `mapstructure:"use_service_node_port" cty:"use_service_node_port" hcl:"use_service_node_port"`
+	ServiceType               *v1.ServiceType          `mapstructure:"service_type" cty:"service_type" hcl:"service_type"`
+	ServicePort               *int                     `mapstructure:"service_port" cty:"service_port" hcl:"service_port"`
 	SkipExtractImage          *bool                    `mapstructure:"skip_extract_image" cty:"skip_extract_image" hcl:"skip_extract_image"`
 	OutputImageFile           *string                  `mapstructure:"output_image_file" cty:"output_image_file" hcl:"output_image_file"`
 	SSHHost                   *string                  `mapstructure:"ssh_host" cty:"ssh_host" hcl:"ssh_host"`
@@ -91,7 +93,8 @@ func (*FlatConfig) HCL2Spec() map[string]hcldec.Spec {
 		"packer_sensitive_variables":   &hcldec.AttrSpec{Name: "packer_sensitive_variables", Type: cty.List(cty.String), Required: false},
 		"comm":                         &hcldec.BlockSpec{TypeName: "comm", Nested: hcldec.ObjectSpec((*communicator.FlatConfig)(nil).HCL2Spec())},
 		"namespace":                    &hcldec.AttrSpec{Name: "namespace", Type: cty.String, Required: false},
-		"use_service_node_port":        &hcldec.AttrSpec{Name: "use_service_node_port", Type: cty.Bool, Required: false},
+		"service_type":                 &hcldec.AttrSpec{Name: "service_type", Type: cty.String, Required: false},
+		"service_port":                 &hcldec.AttrSpec{Name: "service_port", Type: cty.Number, Required: false},
 		"skip_extract_image":           &hcldec.AttrSpec{Name: "skip_extract_image", Type: cty.Bool, Required: false},
 		"output_image_file":            &hcldec.AttrSpec{Name: "output_image_file", Type: cty.String, Required: false},
 		"ssh_host":                     &hcldec.AttrSpec{Name: "ssh_host", Type: cty.String, Required: false},

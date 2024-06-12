@@ -3,6 +3,7 @@ package kubevirt
 import (
 	"context"
 	"fmt"
+	"github.com/google/martian/v3/log"
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
 	packersdk "github.com/hashicorp/packer-plugin-sdk/packer"
 	v1 "k8s.io/api/core/v1"
@@ -62,15 +63,41 @@ func (s *StepRunSourceServer) Run(ctx context.Context, state multistep.StateBag)
 				ui.Say("Source server is running")
 				time.Sleep(time.Duration(config.RunConfig.SourceServerWaitTime) * time.Second)
 
-				if config.K8sConfig.UseServiceNodePort {
-					svc := s.createNodePortService(config, vm)
+				if config.K8sConfig.ServiceType != "" {
+					ui.Sayf("Creating VM service, type %s, for SSH provisioning.", config.K8sConfig.ServiceType)
+					svc := s.createService(config, vm)
 					if err := s.Client.Create(context.Background(), svc); err != nil {
-						ui.Say("Failed to create node port service")
+						ui.Say("Failed to create VM service")
 						ui.Error(err.Error())
 						return multistep.ActionHalt
 					}
 					config.RunConfig.SSHPort = int(svc.Spec.Ports[0].NodePort)
 					config.Comm.SSHPort = config.RunConfig.SSHPort
+
+					// Wait for lb IP
+					if config.K8sConfig.ServiceType == v1.ServiceTypeLoadBalancer {
+						for {
+							select {
+							case <-ctx.Done():
+								ui.Error("Build is canceled, stops waiting for source server VM service")
+								return multistep.ActionHalt
+							default:
+								err = s.Client.Get(context.Background(), key, svc)
+								if err != nil {
+									ui.Errorf("Error waiting for VM service: %s", err.Error())
+									return multistep.ActionHalt
+								}
+								if len(svc.Status.LoadBalancer.Ingress) < 1 {
+									ui.Say("VM service LoadBalancer IP is not ready")
+									time.Sleep(3 * time.Second)
+								} else {
+									ui.Sayf("Using LoadBalancer IP %s", svc.Status.LoadBalancer.Ingress[0].IP)
+									config.Comm.SSHHost = svc.Status.LoadBalancer.Ingress[0].IP
+									return multistep.ActionContinue
+								}
+							}
+						}
+					}
 				}
 				return multistep.ActionContinue
 			}
@@ -87,7 +114,7 @@ func (s *StepRunSourceServer) Cleanup(state multistep.StateBag) {
 	if err != nil {
 		ui.Error(fmt.Sprintf("Error deleting source server vm: %s", err))
 	}
-	if config.K8sConfig.UseServiceNodePort {
+	if config.K8sConfig.ServiceType != "" {
 		err = s.Client.Delete(context.Background(), &v1.Service{ObjectMeta: metav1.ObjectMeta{Namespace: vm.Namespace, Name: vm.Name}})
 		if err != nil {
 			ui.Error(fmt.Sprintf("Error deleting source server vm service: %s", err))
@@ -198,15 +225,15 @@ func (s *StepRunSourceServer) createSourceServerVm(config *Config, pvcName strin
 	}
 }
 
-func (s *StepRunSourceServer) createNodePortService(config *Config, vm *virtv1.VirtualMachine) *v1.Service {
+func (s *StepRunSourceServer) createService(config *Config, vm *virtv1.VirtualMachine) *v1.Service {
 	ipFamilyPolicy := v1.IPFamilyPolicySingleStack
-	return &v1.Service{
+	svc := &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      vm.Name,
 			Namespace: vm.Namespace,
 		},
 		Spec: v1.ServiceSpec{
-			Type:     v1.ServiceTypeNodePort,
+			Type:     v1.ServiceTypeClusterIP,
 			Selector: vm.Labels,
 			Ports: []v1.ServicePort{
 				{
@@ -223,4 +250,19 @@ func (s *StepRunSourceServer) createNodePortService(config *Config, vm *virtv1.V
 			IPFamilyPolicy: &ipFamilyPolicy,
 		},
 	}
+
+	switch config.K8sConfig.ServiceType {
+	case v1.ServiceTypeNodePort:
+		svc.Spec.Type = v1.ServiceTypeNodePort
+		if config.K8sConfig.ServicePort > 0 {
+			svc.Spec.Ports[0].NodePort = int32(config.K8sConfig.ServicePort)
+		}
+	case v1.ServiceTypeLoadBalancer:
+		svc.Spec.Type = v1.ServiceTypeLoadBalancer
+		svc.Spec.Ports[0].Port = int32(config.K8sConfig.ServicePort)
+	default:
+		log.Errorf("VM service is only supported for service types %s", fmt.Sprintf("%s and %s", v1.ServiceTypeNodePort, v1.ServiceTypeLoadBalancer))
+	}
+
+	return svc
 }

@@ -3,6 +3,7 @@ module github.com/tnosse/packer-plugin-kubevirt
 go 1.22.3
 
 require (
+	github.com/google/martian/v3 v3.3.2
 	github.com/hashicorp/hcl/v2 v2.19.1
 	github.com/hashicorp/packer-plugin-sdk v0.5.3
 	github.com/stretchr/testify v1.9.0
