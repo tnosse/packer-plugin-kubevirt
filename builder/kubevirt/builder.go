@@ -101,17 +101,17 @@ func (b *Builder) Run(ctx context.Context, ui packer.Ui, hook packer.Hook) (pack
 	steps = append(steps, &communicator.StepDumpSSHKey{Path: "debug-key.crt", SSH: &b.config.Comm.SSH})
 	steps = append(steps, &StepRunSourceServer{Client: k8sClient})
 
-	if !b.config.K8sConfig.UseServiceNodePort {
+	if b.config.K8sConfig.ServiceType == "" {
 		steps = append(steps, &StepPortForward{})
 	}
 
 	steps = append(steps, &communicator.StepConnect{
 		Config: &b.config.Comm,
 		Host: func(bag multistep.StateBag) (string, error) {
-			if b.config.K8sConfig.UseServiceNodePort {
-				return b.config.Comm.SSHHost, nil
-			} else {
+			if b.config.K8sConfig.ServiceType == "" {
 				return "localhost", nil
+			} else {
+				return b.config.Comm.SSHHost, nil
 			}
 		},
 		SSHConfig: b.config.Comm.SSHConfigFunc(),

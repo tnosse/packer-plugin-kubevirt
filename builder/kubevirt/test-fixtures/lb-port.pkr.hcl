@@ -1,5 +1,5 @@
 
-source "kubevirt" "port-forward-example" {
+source "kubevirt" "lb-port-example" {
   ssh_username            = "ubuntu"
   ssh_pty                 = true
   ssh_timeout             = "10m"
@@ -10,12 +10,14 @@ source "kubevirt" "port-forward-example" {
   memory                  = "1Gi"
   cpu                     = "1"
   source_server_wait_time = 30
-  ssh_host                = "localhost"
+  service_type            = "LoadBalancer"
+  service_port            = 2222
+  ssh_host                = "nuc1"
 }
 
 build {
   sources = [
-    "source.kubevirt.port-forward-example"
+    "source.kubevirt.lb-port-example"
   ]
 
   provisioner "file" {

@@ -12,7 +12,8 @@ KubeVirt is an add-on to Kubernetes, which enables running virtual machines on t
 3. Refer to the [Documentation](#Documentation) and [Examples](#Examples)
 
 ## Requirements
-- [`kubectl`](https://kubernetes.io/docs/tasks/tools/install-kubectl/) and [`virtctl`](https://kubevirt.io/user-guide/operations/virtctl_client_tool/) CLIs
+- [`kubectl`](https://kubernetes.io/docs/tasks/tools/install-kubectl/) and [`virtctl`](https://kubevirt.io/user-guide/operations/virtctl_client_tool/) CLIs,
+  `virtctl` is only required if you use `portForward`.
 - Access to a Kubernetes cluster with KubeVirt installed
 - [Packer](https://www.packer.io/downloads.html)
 
@@ -20,7 +21,7 @@ KubeVirt is an add-on to Kubernetes, which enables running virtual machines on t
 Detailed instructions coming soon!
 
 ## Usage
-Detailed usage instructions coming soon!
+Take a look at the [example](example), the `kubevirt` plugin supports port-forward or VM exposed using a Service.
 
 ## Documentation
 You can see detailed plugin documentation [here](docs).

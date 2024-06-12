@@ -10,7 +10,7 @@ source "kubevirt" "node-port-example" {
   memory                  = "1Gi"
   cpu                     = "1"
   source_server_wait_time = 30
-  use_service_node_port   = true
+  service_type            = "NodePort"
   ssh_host                = "nuc1"
 }
 

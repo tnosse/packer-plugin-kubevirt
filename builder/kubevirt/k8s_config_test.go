@@ -3,6 +3,7 @@ package kubevirt
 import (
 	"github.com/hashicorp/packer-plugin-sdk/template/interpolate"
 	"github.com/stretchr/testify/assert"
+	v1 "k8s.io/api/core/v1"
 	"testing"
 )
 
@@ -19,36 +20,38 @@ func TestK8sConfigPrepare(t *testing.T) {
 		{
 			name: "EmptyNamespace",
 			kcInput: &K8sConfig{
-				Namespace:          "",
-				UseServiceNodePort: false,
+				Namespace:   "",
+				ServiceType: "",
 			},
 			expected: &K8sConfig{
-				Namespace:          "default",
-				UseServiceNodePort: false,
+				Namespace:   "default",
+				ServiceType: "",
 			},
 			errors: []error{},
 		},
 		{
 			name: "NonEmptyNamespace",
 			kcInput: &K8sConfig{
-				Namespace:          "kube-system",
-				UseServiceNodePort: true,
+				Namespace:   "kube-system",
+				ServiceType: v1.ServiceTypeNodePort,
 			},
 			expected: &K8sConfig{
-				Namespace:          "kube-system",
-				UseServiceNodePort: true,
+				Namespace:   "kube-system",
+				ServiceType: v1.ServiceTypeNodePort,
 			},
 			errors: []error{},
 		},
 		{
-			name: "EmptyNodeHost",
+			name: "DefaultServicePort",
 			kcInput: &K8sConfig{
-				Namespace:          "default",
-				UseServiceNodePort: true,
+				Namespace:   "default",
+				ServiceType: v1.ServiceTypeLoadBalancer,
+				ServicePort: 0,
 			},
 			expected: &K8sConfig{
-				Namespace:          "default",
-				UseServiceNodePort: true,
+				Namespace:   "default",
+				ServiceType: v1.ServiceTypeLoadBalancer,
+				ServicePort: 22,
 			},
 			errors: []error{},
 		},
