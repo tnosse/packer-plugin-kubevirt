@@ -39,6 +39,31 @@ func TestStepRunSourceServer_createService(t *testing.T) {
 				},
 			},
 		},
+		"clusterIpConfig": {
+			config: &Config{
+				K8sConfig: K8sConfig{
+					ServiceType: v1.ServiceTypeClusterIP,
+					ServicePort: 23,
+				},
+			},
+			vm: vm,
+			want: &v1.Service{
+				Spec: v1.ServiceSpec{
+					Type: v1.ServiceTypeClusterIP,
+					Ports: []v1.ServicePort{
+						{
+							Port:     23,
+							Protocol: v1.ProtocolTCP,
+							TargetPort: intstr.IntOrString{
+								IntVal: 22,
+							},
+						},
+					},
+					IPFamilies:     []v1.IPFamily{v1.IPv4Protocol},
+					IPFamilyPolicy: &ipPolicy,
+				},
+			},
+		},
 		"nodePortConfig": {
 			config: &Config{
 				K8sConfig: K8sConfig{

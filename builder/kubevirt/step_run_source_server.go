@@ -3,6 +3,7 @@ package kubevirt
 import (
 	"context"
 	"fmt"
+	"github.com/google/martian/v3/log"
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
 	packersdk "github.com/hashicorp/packer-plugin-sdk/packer"
 	v1 "k8s.io/api/core/v1"
@@ -267,8 +268,10 @@ func (s *StepRunSourceServer) createService(config *Config, vm *virtv1.VirtualMa
 	case v1.ServiceTypeLoadBalancer:
 		svc.Spec.Type = v1.ServiceTypeLoadBalancer
 		svc.Spec.Ports[0].Port = int32(config.K8sConfig.ServicePort)
-	default:
+	case v1.ServiceTypeClusterIP:
 		svc.Spec.Ports[0].Port = int32(config.K8sConfig.ServicePort)
+	default:
+		log.Errorf("unknown service type: %s", config.K8sConfig.ServiceType)
 	}
 
 	return svc
