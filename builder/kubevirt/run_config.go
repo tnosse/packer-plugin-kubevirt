@@ -2,15 +2,17 @@ package kubevirt
 
 import (
 	"fmt"
+	"net"
+
 	"github.com/hashicorp/packer-plugin-sdk/communicator"
 	"github.com/hashicorp/packer-plugin-sdk/template/interpolate"
-	"net"
 )
 
 type RunConfig struct {
-	communicator.SSH     `mapstructure:",squash"`
-	SourceImage          string `mapstructure:"source_image"`
-	SourceServerWaitTime int    `mapstructure:"source_server_wait_time"`
+	communicator.SSH        `mapstructure:",squash"`
+	SourceImage             string `mapstructure:"source_image"`
+	SourceServerWaitTime    int    `mapstructure:"source_server_wait_time"`
+	CloudInitDataVolumeName string `mapstructure:"cloud_init_data_volume_name"`
 }
 
 func (c *RunConfig) Prepare(ctx *interpolate.Context, k8sConfig *K8sConfig, comm *communicator.Config) []error {
@@ -35,6 +37,10 @@ func (c *RunConfig) Prepare(ctx *interpolate.Context, k8sConfig *K8sConfig, comm
 		errs = append(errs, fmt.Errorf("the 'source_server_wait_time' property must be a positive integer"))
 	} else if c.SourceServerWaitTime == 0 {
 		c.SourceServerWaitTime = 30
+	}
+
+	if len(c.CloudInitDataVolumeName) == 0 {
+		c.CloudInitDataVolumeName = "cloudinit"
 	}
 
 	return errs

@@ -66,6 +66,7 @@ type FlatConfig struct {
 	SSHPrivateKey             []byte                   `mapstructure:"ssh_private_key" undocumented:"true" cty:"ssh_private_key" hcl:"ssh_private_key"`
 	SourceImage               *string                  `mapstructure:"source_image" cty:"source_image" hcl:"source_image"`
 	SourceServerWaitTime      *int                     `mapstructure:"source_server_wait_time" cty:"source_server_wait_time" hcl:"source_server_wait_time"`
+	CloudInitDataVolumeName   *string                  `mapstructure:"cloud_init_data_volume_name" cty:"cloud_init_data_volume_name" hcl:"cloud_init_data_volume_name"`
 	Storage                   *string                  `mapstructure:"storage" cty:"storage" hcl:"storage"`
 	Memory                    *string                  `mapstructure:"memory" cty:"memory" hcl:"memory"`
 	Cpu                       *string                  `mapstructure:"cpu" cty:"cpu" hcl:"cpu"`
@@ -137,6 +138,7 @@ func (*FlatConfig) HCL2Spec() map[string]hcldec.Spec {
 		"ssh_private_key":              &hcldec.AttrSpec{Name: "ssh_private_key", Type: cty.List(cty.Number), Required: false},
 		"source_image":                 &hcldec.AttrSpec{Name: "source_image", Type: cty.String, Required: false},
 		"source_server_wait_time":      &hcldec.AttrSpec{Name: "source_server_wait_time", Type: cty.Number, Required: false},
+		"cloud_init_data_volume_name":  &hcldec.AttrSpec{Name: "cloud_init_data_volume_name", Type: cty.String, Required: false},
 		"storage":                      &hcldec.AttrSpec{Name: "storage", Type: cty.String, Required: false},
 		"memory":                       &hcldec.AttrSpec{Name: "memory", Type: cty.String, Required: false},
 		"cpu":                          &hcldec.AttrSpec{Name: "cpu", Type: cty.String, Required: false},

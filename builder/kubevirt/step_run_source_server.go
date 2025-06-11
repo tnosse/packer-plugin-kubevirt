@@ -3,6 +3,9 @@ package kubevirt
 import (
 	"context"
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/google/martian/v3/log"
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
 	packersdk "github.com/hashicorp/packer-plugin-sdk/packer"
@@ -14,8 +17,6 @@ import (
 	virtv1 "kubevirt.io/api/core/v1"
 	cdiv1b1 "kubevirt.io/containerized-data-importer-api/pkg/apis/core/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"strings"
-	"time"
 )
 
 var _ multistep.Step = &StepRunSourceServer{}
@@ -152,11 +153,17 @@ func (s *StepRunSourceServer) createSourceServerVm(config *Config, pvcName strin
 					},
 				},
 				Spec: virtv1.VirtualMachineInstanceSpec{
+					Networks: []virtv1.Network{
+						*virtv1.DefaultPodNetwork(),
+					},
 					Domain: virtv1.DomainSpec{
 						CPU: &virtv1.CPU{
 							//DedicatedCPUPlacement: true,
 						},
 						Devices: virtv1.Devices{
+							Interfaces: []virtv1.Interface{
+								*virtv1.DefaultMasqueradeNetworkInterface(),
+							},
 							Disks: []virtv1.Disk{
 								{
 									Name: "datavolumedisk",
@@ -167,7 +174,7 @@ func (s *StepRunSourceServer) createSourceServerVm(config *Config, pvcName strin
 									},
 								},
 								{
-									Name: "cloudinit",
+									Name: config.RunConfig.CloudInitDataVolumeName,
 									DiskDevice: virtv1.DiskDevice{
 										Disk: &virtv1.DiskTarget{
 											Bus: "virtio",
@@ -194,7 +201,7 @@ func (s *StepRunSourceServer) createSourceServerVm(config *Config, pvcName strin
 							},
 						},
 						{
-							Name: "cloudinit",
+							Name: config.RunConfig.CloudInitDataVolumeName,
 							VolumeSource: virtv1.VolumeSource{
 								CloudInitNoCloud: &virtv1.CloudInitNoCloudSource{
 									UserData: cloudInit.String(),
