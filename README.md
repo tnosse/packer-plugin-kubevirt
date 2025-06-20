@@ -38,4 +38,4 @@ Detailed instructions coming soon!
 Your contributions are always welcome! Please take a look at the [contribution guidelines](CONTRIBUTING.md) first.
 
 ## License
-This project is licensed under the [MIT License](LICENSE.md).
+This project is licensed under the [MPL-2.0 license](LICENSE.md).
