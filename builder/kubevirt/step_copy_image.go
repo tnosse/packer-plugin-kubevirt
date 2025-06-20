@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
 	packersdk "github.com/hashicorp/packer-plugin-sdk/packer"
+	"io"
 	v1 "k8s.io/api/core/v1"
 	virtv1 "kubevirt.io/api/core/v1"
 	"os"
@@ -80,9 +81,9 @@ func (s *StepCopyImage) Run(ctx context.Context, state multistep.StateBag) multi
 		return multistep.ActionHalt
 	}
 
-	err = os.Rename(tmpDir+string(os.PathSeparator)+"disk.img", config.ImageConfig.OutputImageFile)
+	err = moveFile(tmpDir+string(os.PathSeparator)+"disk.img", config.ImageConfig.OutputImageFile)
 	if err != nil {
-		ui.Error(fmt.Sprintf("Failed to rename temporary file: %s", err))
+		ui.Error(fmt.Sprintf("Failed to move temporary file: %s", err))
 		return multistep.ActionHalt
 	}
 
@@ -92,3 +93,51 @@ func (s *StepCopyImage) Run(ctx context.Context, state multistep.StateBag) multi
 }
 
 func (s *StepCopyImage) Cleanup(state multistep.StateBag) {}
+
+func moveFile(source, destination string) error {
+	// First attempt a simple rename
+	err := os.Rename(source, destination)
+	if err == nil {
+		return nil
+	}
+
+	// If rename fails (e.g., cross-device link), fall back to copy
+	src, err := os.Open(source)
+	if err != nil {
+		return fmt.Errorf("failed to open source file: %w", err)
+	}
+	defer src.Close()
+
+	dst, err := os.Create(destination)
+	if err != nil {
+		return fmt.Errorf("failed to create destination file: %w", err)
+	}
+	defer dst.Close()
+
+	// Copy the contents
+	if _, err := io.Copy(dst, src); err != nil {
+		dst.Close()
+		os.Remove(destination) // Clean up the partial file
+		return fmt.Errorf("failed to copy contents: %w", err)
+	}
+
+	// Ensure all data is written to disk
+	if err := dst.Sync(); err != nil {
+		dst.Close()
+		os.Remove(destination)
+		return fmt.Errorf("failed to sync destination file: %w", err)
+	}
+
+	// Close files before removing source
+	src.Close()
+	dst.Close()
+
+	// Remove the source file
+	if err := os.Remove(source); err != nil {
+		// If we can't remove the source, we should still return success
+		// since the copy was successful, but log the error
+		return fmt.Errorf("file copied successfully but failed to remove source file: %w", err)
+	}
+
+	return nil
+}
